@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Katabatic - Dashboard</title>
+    <meta property="og:title" content="Katabatic - Dashboard" />
+    <meta name="twitter:title" content="Katabatic - Dashboard" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #0f1117;
+        --surface: #1e2130;
+        --surface2: #252a3a;
+        --border: #2e3450;
+        --text: #e8eaf6;
+        --muted: #8b90b0;
+        --accent: #5c7cfa;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        font-size: 14px;
+        min-height: 100vh;
+        padding-bottom: 60px;
+      }
+
+      /* ── HEADER ── */
+      header {
+        padding: 28px 40px 20px;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(180deg, #12152299 0%, transparent 100%);
+        backdrop-filter: blur(8px);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .header-inner {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .brand h1 {
+        font-family: "Space Mono", monospace;
+        font-size: clamp(16px, 2vw, 22px);
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        line-height: 1.1;
+        background: linear-gradient(135deg, #fff 40%, var(--accent));
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .brand p {
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 4px;
+        font-family: "Space Mono", monospace;
+      }
+
+      /* ── DROPDOWNS ── */
+      .filters {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .filter-group label {
+        font-size: 10px;
+        font-family: "Space Mono", monospace;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--muted);
+      }
+
+      select {
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 32px 8px 12px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        cursor: pointer;
+        min-width: 150px;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b90b0' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      select:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px #5c7cfa22;
+      }
+      select:hover {
+        border-color: #3e4568;
+      }
+
+      /* ── MAIN ── */
+      main {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 28px 40px;
+      }
+
+      /* ── METRIC CARDS ── */
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      @media (max-width: 900px) {
+        .metrics {
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+      }
+      @media (max-width: 500px) {
+        .metrics {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+        transition:
+          border-color 0.2s,
+          transform 0.18s;
+      }
+
+      .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent-color, var(--accent)), transparent);
+        opacity: 0.7;
+      }
+
+      .card:hover {
+        border-color: #3e4568;
+        transform: translateY(-2px);
+      }
+
+      .card-label {
+        font-size: 10px;
+        font-family: "Space Mono", monospace;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+
+      .card-value {
+        font-size: clamp(22px, 3vw, 30px);
+        font-family: "Space Mono", monospace;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.1;
+      }
+
+      .card-sub {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 6px;
+        line-height: 1.4;
+      }
+
+      .card-icon {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        font-size: 18px;
+        opacity: 0.2;
+      }
+
+      /* ── CHART GRID ── */
+      .section-label {
+        font-family: "Space Mono", monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+
+      .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+      }
+
+      @media (max-width: 900px) {
+        .charts-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .chart-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+      }
+
+      .chart-title {
+        font-family: "Space Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 0.5px;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+
+      .chart-div {
+        width: 100%;
+        min-height: 300px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      /* ── LEGEND ── */
+      .legend-dots {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+
+      .dot-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--muted);
+        font-family: "Space Mono", monospace;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      /* ── LOADING ── */
+      #loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        gap: 16px;
+        transition: opacity 0.4s;
+      }
+
+      .loader-text {
+        font-family: "Space Mono", monospace;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      #error-banner {
+        display: none;
+        background: #3a1515;
+        border: 1px solid #8b3030;
+        border-radius: 10px;
+        padding: 16px 20px;
+        color: #f87171;
+        font-family: "Space Mono", monospace;
+        font-size: 12px;
+        margin-bottom: 24px;
+        line-height: 1.7;
+      }
+
+      #error-banner code {
+        background: #4a2020;
+        padding: 1px 6px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <div class="loader-text">Loading results.csv…</div>
+    </div>
+
+    <header>
+      <div class="header-inner">
+        <div class="brand">
+          <h1>Katabatic - Dashboard</h1>
+          <p>// Synthetic data model benchmarking</p>
+        </div>
+        <div class="filters">
+          <div class="filter-group">
+            <label>Member</label>
+            <select id="sel-member" onchange="onFilterChange()">
+              <option value="All">All</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Model</label>
+            <select id="sel-model" onchange="onFilterChange()">
+              <option value="All">All</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Dataset</label>
+            <select id="sel-dataset" onchange="onFilterChange()">
+              <option value="All">All</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div id="error-banner"></div>
+
+      <div class="metrics">
+        <div class="card" id="card-total-members">
+          <div class="card-icon">📊</div>
+          <div class="card-label">Total Members</div>
+          <div class="card-value" id="m-members">—</div>
+          <div class="card-sub" id="m-members-sub">in current view</div>
+        </div>
+        <div class="card" id="card-total-models">
+          <div class="card-icon">🧩</div>
+          <div class="card-label">Total Models</div>
+          <div class="card-value" id="m-models">—</div>
+          <div class="card-sub" id="m-models-sub">in current view</div>
+        </div>
+        <div class="card hidden" id="card-member-impl" style="--accent-color: #f59e0b">
+          <div class="card-icon">👤</div>
+          <div class="card-label">Total Model Implementations</div>
+          <div class="card-value" id="m-member-total">—</div>
+          <div class="card-sub" id="m-member-sub">Select a member to view this summary.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">⚡</div>
+          <div class="card-label">Avg Composite</div>
+          <div class="card-value" id="m-avg">—</div>
+          <div class="card-sub" id="m-avg-sub">composite score</div>
+        </div>
+        <div class="card" style="--accent-color: #22c55e">
+          <div class="card-icon">🏆</div>
+          <div class="card-label">Best Result</div>
+          <div class="card-value" id="m-best">—</div>
+          <div class="card-sub" id="m-best-sub">—</div>
+        </div>
+        <div class="card" style="--accent-color: #ef4444">
+          <div class="card-icon">⚠️</div>
+          <div class="card-label">Worst Result</div>
+          <div class="card-value" id="m-worst">—</div>
+          <div class="card-sub" id="m-worst-sub">—</div>
+        </div>
+      </div>
+
+      <div class="legend-dots" id="legend"></div>
+
+      <div class="section-label">Performance Charts</div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title" id="chart-bar-title">Avg Composite Score — by Model</div>
+          <div id="chart-bar" class="chart-div"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title" id="chart-radar-title">Metric Radar — by Model</div>
+          <div id="chart-radar" class="chart-div"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title" id="chart-heatmap-title">
+            Composite Heatmap — Model × Dataset
+          </div>
+          <div id="chart-heatmap" class="chart-div"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title" id="chart-grouped-title">
+            Metric Breakdown — Grouped by Model
+          </div>
+          <div id="chart-grouped" class="chart-div"></div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // ── CONSTANTS ──
+      const MODEL_COLORS = {
+        codi: "#3266ad",
+        cwgangp: "#1D9E75",
+        medgan: "#D85A30",
+        tabebm: "#7F77DD",
+        pategan: "#BA7517",
+      };
+
+      const METRICS = ["fidelity", "utility", "diversity", "privacy", "consistency", "stability"];
+
+      /** Distinct colors for radar traces when comparing members (one model selected). */
+      const MEMBER_RADAR_COLORS = [
+        "#5c7cfa",
+        "#f97316",
+        "#22c55e",
+        "#eab308",
+        "#ec4899",
+        "#14b8a6",
+        "#a855f7",
+        "#fb7185",
+        "#38bdf8",
+        "#fbbf24",
+      ];
+
+      const PLOTLY_BASE = {
+        paper_bgcolor: "transparent",
+        plot_bgcolor: "transparent",
+        font: { family: "'DM Sans', sans-serif", color: "#8b90b0", size: 11 },
+        legend: { bgcolor: "transparent", borderwidth: 0, font: { color: "#8b90b0", size: 10 } },
+      };
+
+      const AX = {
+        gridcolor: "#2e3450",
+        zerolinecolor: "#2e3450",
+        tickfont: { color: "#8b90b0", size: 10 },
+      };
+
+      const DIMENSION_LABELS = {
+        All: "Composite Score",
+        fidelity: "Fidelity",
+        utility: "Utility",
+        diversity: "Diversity",
+        privacy: "Privacy",
+        consistency: "Consistency",
+        stability: "Stability",
+      };
+
+      let allData = [];
+
+      // ── HELPERS ──
+      const unique = (arr, key) => [...new Set(arr.map((r) => r[key]).filter(Boolean))].sort();
+      const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
+      const fmt = (n) => (n != null ? (+n).toFixed(3) : "N/A");
+      const getColor = (m) => MODEL_COLORS[m.toLowerCase()] || "#5c7cfa";
+
+      function populateSelect(id, values) {
+        const sel = document.getElementById(id);
+        const prev = sel.value;
+        sel.innerHTML = '<option value="All">All</option>';
+        values.forEach((v) => {
+          const o = document.createElement("option");
+          o.value = o.textContent = v;
+          sel.appendChild(o);
+        });
+        if ([...sel.options].some((o) => o.value === prev)) sel.value = prev;
+      }
+
+      function getFiltered() {
+        const member = document.getElementById("sel-member").value;
+        const model = document.getElementById("sel-model").value;
+        const dataset = document.getElementById("sel-dataset").value;
+        return allData.filter(
+          (r) =>
+            (member === "All" || r.member_name === member) &&
+            (model === "All" || r.model_name === model) &&
+            (dataset === "All" || r.dataset_name === dataset),
+        );
+      }
+
+      function getSelectedDimension() {
+        return "All";
+      }
+
+      function getSelectedScore(r) {
+        const dimension = getSelectedDimension();
+        const key = dimension === "All" ? "composite_score" : dimension;
+        const val = +r[key];
+        return Number.isFinite(val) ? val : NaN;
+      }
+
+      function getRowsForOptions(excludeField) {
+        const member = document.getElementById("sel-member").value;
+        const model = document.getElementById("sel-model").value;
+        const dataset = document.getElementById("sel-dataset").value;
+        return allData.filter(
+          (r) =>
+            (excludeField === "member" || member === "All" || r.member_name === member) &&
+            (excludeField === "model" || model === "All" || r.model_name === model) &&
+            (excludeField === "dataset" || dataset === "All" || r.dataset_name === dataset),
+        );
+      }
+
+      function syncFilterOptions() {
+        populateSelect("sel-member", unique(getRowsForOptions("member"), "member_name"));
+        populateSelect("sel-model", unique(getRowsForOptions("model"), "model_name"));
+        populateSelect("sel-dataset", unique(getRowsForOptions("dataset"), "dataset_name"));
+      }
+
+      function onFilterChange() {
+        syncFilterOptions();
+        filterAndRender();
+      }
+
+      // ── MAIN RENDER ──
+      function filterAndRender() {
+        const data = getFiltered();
+        const selectedMember = document.getElementById("sel-member").value;
+        const selectedModel = document.getElementById("sel-model").value;
+        const selectedDataset = document.getElementById("sel-dataset").value;
+        const selectedDimension = getSelectedDimension();
+        const scoreLabel = DIMENSION_LABELS[selectedDimension] || selectedDimension;
+        const radarMetrics = selectedDimension === "All" ? METRICS : [selectedDimension];
+        const heatmapTitleEl = document.getElementById("chart-heatmap-title");
+        const groupedTitleEl = document.getElementById("chart-grouped-title");
+        heatmapTitleEl.textContent = `${scoreLabel} Heatmap — Model × Dataset`;
+        groupedTitleEl.textContent =
+          selectedDimension === "All"
+            ? "Metric Breakdown — Grouped by Model"
+            : `${scoreLabel} Breakdown — Grouped by Model`;
+
+        // Summary cards
+        const scores = data.map(getSelectedScore).filter((n) => !isNaN(n));
+        const avgScore = avg(scores);
+        const best = data.length
+          ? data.reduce((a, b) => (getSelectedScore(b) > getSelectedScore(a) ? b : a))
+          : null;
+        const worst = data.length
+          ? data.reduce((a, b) => (getSelectedScore(b) < getSelectedScore(a) ? b : a))
+          : null;
+        const totalMembers = unique(data, "member_name").length;
+        const totalModels = unique(data, "model_name").length;
+
+        document.getElementById("m-members").textContent = totalMembers;
+        document.getElementById("m-members-sub").textContent =
+          totalMembers === 1 ? "member in current view" : "members in current view";
+        document.getElementById("m-models").textContent = totalModels;
+        document.getElementById("m-models-sub").textContent =
+          totalModels === 1 ? "model in current view" : "models in current view";
+        document.getElementById("m-avg").textContent = fmt(avgScore);
+        document.getElementById("m-avg-sub").textContent =
+          `Average ${scoreLabel.toLowerCase()} across filtered results`;
+
+        const memberCard = document.getElementById("card-member-impl");
+        const memberTotalEl = document.getElementById("m-member-total");
+        const memberSubEl = document.getElementById("m-member-sub");
+        const totalMembersCard = document.getElementById("card-total-members");
+        const totalModelsCard = document.getElementById("card-total-models");
+        const shouldHideTopCounts =
+          selectedMember !== "All" ||
+          selectedModel !== "All" ||
+          selectedDataset !== "All";
+
+        if (shouldHideTopCounts) {
+          totalMembersCard.classList.add("hidden");
+          totalModelsCard.classList.add("hidden");
+        } else {
+          totalMembersCard.classList.remove("hidden");
+          totalModelsCard.classList.remove("hidden");
+        }
+
+        if (selectedMember === "All") {
+          memberCard.classList.add("hidden");
+          memberTotalEl.textContent = "—";
+          memberSubEl.textContent = "Select a member to view this summary.";
+        } else {
+          const memberRows = allData.filter((r) => r.member_name === selectedMember);
+          const uniqueModels = unique(memberRows, "model_name");
+          memberCard.classList.remove("hidden");
+          memberTotalEl.textContent = uniqueModels.length;
+          memberSubEl.textContent =
+            `${selectedMember} implemented ${uniqueModels.length} model${
+              uniqueModels.length === 1 ? "" : "s"
+            } across all datasets (${memberRows.length} total row${
+              memberRows.length === 1 ? "" : "s"
+            }).`;
+        }
+
+        if (best) {
+          document.getElementById("m-best").textContent = fmt(getSelectedScore(best));
+          document.getElementById("m-best-sub").textContent =
+            `Highest ${scoreLabel.toLowerCase()} — ${best.model_name} · ${best.dataset_name}`;
+        } else {
+          document.getElementById("m-best").textContent = "—";
+          document.getElementById("m-best-sub").textContent =
+            `No highest ${scoreLabel.toLowerCase()} (no data)`;
+        }
+
+        if (worst) {
+          document.getElementById("m-worst").textContent = fmt(getSelectedScore(worst));
+          document.getElementById("m-worst-sub").textContent =
+            `Lowest ${scoreLabel.toLowerCase()} — ${worst.model_name} · ${worst.dataset_name}`;
+        } else {
+          document.getElementById("m-worst").textContent = "—";
+          document.getElementById("m-worst-sub").textContent =
+            `No lowest ${scoreLabel.toLowerCase()} (no data)`;
+        }
+
+        // Group by model / dataset
+        const models = unique(data, "model_name");
+        const datasets = unique(data, "dataset_name");
+        const byModel = Object.fromEntries(
+          models.map((m) => [m, data.filter((r) => r.model_name === m)]),
+        );
+
+        // Legend
+        document.getElementById("legend").innerHTML = models
+          .map(
+            (m) =>
+              `<div class="dot-item"><div class="dot" style="background:${getColor(m)}"></div>${m}</div>`,
+          )
+          .join("");
+
+        // ── Chart 1: Horizontal Bar ──
+        const chartBarTitleEl = document.getElementById("chart-bar-title");
+
+        if (selectedModel === "All") {
+          const barAvgs = models.map((m) =>
+            avg(byModel[m].map(getSelectedScore).filter((n) => !isNaN(n))),
+          );
+
+          chartBarTitleEl.textContent = `Avg ${scoreLabel} — by Model`;
+          Plotly.react(
+            "chart-bar",
+            [
+              {
+                type: "bar",
+                orientation: "h",
+                y: models,
+                x: barAvgs,
+                marker: { color: models.map(getColor), opacity: 0.9 },
+                text: barAvgs.map(fmt),
+                textposition: "outside",
+                textfont: { color: "#e8eaf6", size: 11 },
+                hovertemplate: "<b>%{y}</b><br>Avg " + scoreLabel + ": %{x:.3f}<extra></extra>",
+              },
+            ],
+            {
+              ...PLOTLY_BASE,
+              margin: { t: 10, b: 40, l: 85, r: 65 },
+              xaxis: {
+                ...AX,
+                range: [0, 1.05],
+                title: { text: "Score", font: { color: "#8b90b0", size: 11 } },
+              },
+              yaxis: { ...AX, automargin: true },
+            },
+            { responsive: true, displayModeBar: false },
+          );
+        } else {
+          const selectedRows = byModel[selectedModel] || [];
+          const members = unique(selectedRows, "member_name");
+          const memberAvgs = members.map((member) =>
+            avg(
+              selectedRows
+                .filter((r) => r.member_name === member)
+                .map(getSelectedScore)
+                .filter((n) => !isNaN(n)),
+            ),
+          );
+          const modelAvg = avg(memberAvgs.filter((n) => !isNaN(n)));
+
+          chartBarTitleEl.textContent = `${scoreLabel} — ${selectedModel} by Member`;
+          Plotly.react(
+            "chart-bar",
+            [
+              {
+                type: "bar",
+                orientation: "h",
+                y: members,
+                x: memberAvgs,
+                marker: { color: getColor(selectedModel), opacity: 0.9 },
+                text: memberAvgs.map(fmt),
+                textposition: "outside",
+                textfont: { color: "#e8eaf6", size: 11 },
+                hovertemplate:
+                  "<b>%{y}</b><br>Avg " +
+                  scoreLabel +
+                  " (" +
+                  selectedModel +
+                  "): %{x:.3f}<extra></extra>",
+              },
+            ],
+            {
+              ...PLOTLY_BASE,
+              margin: { t: 10, b: 40, l: 85, r: 65 },
+              xaxis: {
+                ...AX,
+                range: [0, 1.05],
+                title: { text: "Score", font: { color: "#8b90b0", size: 11 } },
+              },
+              yaxis: { ...AX, automargin: true },
+              shapes:
+                modelAvg == null
+                  ? []
+                  : [
+                      {
+                        type: "line",
+                        x0: modelAvg,
+                        x1: modelAvg,
+                        y0: 0,
+                        y1: 1,
+                        yref: "paper",
+                        line: { color: "#e8eaf6", width: 1.5, dash: "dot" },
+                      },
+                    ],
+              annotations:
+                modelAvg == null
+                  ? []
+                  : [
+                      {
+                        x: modelAvg,
+                        y: 1.06,
+                        yref: "paper",
+                        text: `Model avg: ${fmt(modelAvg)}`,
+                        showarrow: false,
+                        font: { color: "#e8eaf6", size: 10 },
+                      },
+                    ],
+            },
+            { responsive: true, displayModeBar: false },
+          );
+        }
+
+        // ── Chart 2: Radar ──
+        const radarTitleEl = document.getElementById("chart-radar-title");
+        let radarTraces = [];
+        const singleMetricRadar = radarMetrics.length === 1;
+        if (selectedModel === "All") {
+          radarTitleEl.textContent =
+            selectedDimension === "All"
+              ? "Metric Radar — by Model"
+              : `${scoreLabel} Radar — by Model`;
+          const denseRadar = models.length > 6;
+          radarTraces = models.map((m) => {
+            const rows = byModel[m];
+            const vals = radarMetrics.map((met) =>
+              avg(rows.map((r) => +r[met]).filter((n) => !isNaN(n))),
+            );
+            return {
+              type: "scatterpolar",
+              r: [...vals, vals[0]],
+              theta: [...radarMetrics, radarMetrics[0]],
+              name: m,
+              ...(singleMetricRadar
+                ? { mode: "lines+markers", marker: { size: 7, color: getColor(m) } }
+                : { mode: "lines" }),
+              line: { color: getColor(m), width: singleMetricRadar ? 2.6 : denseRadar ? 1.4 : 2 },
+              fill: singleMetricRadar ? "none" : denseRadar ? "none" : "toself",
+              fillcolor: denseRadar ? "transparent" : getColor(m) + "1f",
+              opacity: denseRadar ? 0.72 : 0.9,
+              hovertemplate: "<b>%{theta}</b>: %{r:.3f}<extra>" + m + "</extra>",
+            };
+          });
+        } else {
+          radarTitleEl.textContent =
+            selectedDimension === "All"
+              ? `Metric Radar — ${selectedModel} by Member`
+              : `${scoreLabel} Radar — ${selectedModel} by Member`;
+          const selectedRows = byModel[selectedModel] || [];
+          const members = unique(selectedRows, "member_name");
+          radarTraces = members.map((member, mi) => {
+            const memberColor = MEMBER_RADAR_COLORS[mi % MEMBER_RADAR_COLORS.length];
+            const rows = selectedRows.filter((r) => r.member_name === member);
+            const vals = radarMetrics.map((met) =>
+              avg(rows.map((r) => +r[met]).filter((n) => !isNaN(n))),
+            );
+            return {
+              type: "scatterpolar",
+              r: [...vals, vals[0]],
+              theta: [...radarMetrics, radarMetrics[0]],
+              name: member,
+              ...(singleMetricRadar
+                ? { mode: "lines+markers", marker: { size: 7, color: memberColor } }
+                : { mode: "lines" }),
+              line: { color: memberColor, width: singleMetricRadar ? 2.6 : 2 },
+              fill: singleMetricRadar ? "none" : "toself",
+              fillcolor: memberColor + "22",
+              hovertemplate: "<b>%{theta}</b>: %{r:.3f}<extra>" + member + "</extra>",
+            };
+          });
+        }
+
+        // Show legend when comparing members (one model) or comparing models (one member).
+        const showRadarLegend = selectedModel !== "All" || selectedMember !== "All";
+
+        Plotly.react(
+          "chart-radar",
+          radarTraces,
+          {
+            ...PLOTLY_BASE,
+            showlegend: showRadarLegend,
+            legend: showRadarLegend
+              ? {
+                  bgcolor: "transparent",
+                  borderwidth: 0,
+                  orientation: "v",
+                  x: 1.02,
+                  xanchor: "left",
+                  y: 1,
+                  yanchor: "top",
+                  font: { color: "#e8eaf6", size: 11 },
+                  traceorder: "normal",
+                  itemclick: "toggleothers",
+                  itemdoubleclick: "toggle",
+                }
+              : PLOTLY_BASE.legend,
+            polar: {
+              bgcolor: "transparent",
+              radialaxis: {
+                visible: true,
+                range: [0, 1],
+                gridcolor: "#2e3450",
+                tickfont: { color: "#8b90b0", size: 10 },
+              },
+              angularaxis: { gridcolor: "#2e3450", tickfont: { color: "#e8eaf6", size: 12 } },
+            },
+            margin: { t: 20, b: 20, l: 30, r: showRadarLegend ? 110 : 30 },
+          },
+          { responsive: true, displayModeBar: false },
+        );
+
+        // ── Chart 3: Heatmap ──
+        const heatZ = models.map((m) =>
+          datasets.map((d) => {
+            const rows = data.filter((r) => r.model_name === m && r.dataset_name === d);
+            return rows.length ? avg(rows.map(getSelectedScore).filter((n) => !isNaN(n))) : null;
+          }),
+        );
+
+        const annotations = [];
+        models.forEach((m, mi) => {
+          datasets.forEach((d, di) => {
+            const v = heatZ[mi][di];
+            if (v != null)
+              annotations.push({
+                x: d,
+                y: m,
+                text: fmt(v),
+                showarrow: false,
+                font: { color: v > 0.55 ? "#0f1117" : "#ffffff", size: 10 },
+              });
+          });
+        });
+
+        Plotly.react(
+          "chart-heatmap",
+          [
+            {
+              type: "heatmap",
+              z: heatZ,
+              x: datasets,
+              y: models,
+              colorscale: [
+                [0, "#1a1f33"],
+                [0.5, "#3266ad"],
+                [1, "#22c55e"],
+              ],
+              zmin: 0,
+              zmax: 1,
+              showscale: true,
+              colorbar: { tickfont: { color: "#8b90b0", size: 9 }, outlinewidth: 0, thickness: 12 },
+              hovertemplate:
+                "<b>%{y}</b> × <b>%{x}</b><br>" + scoreLabel + ": %{z:.3f}<extra></extra>",
+            },
+          ],
+          {
+            ...PLOTLY_BASE,
+            margin: { t: 10, b: 80, l: 90, r: 60 },
+            xaxis: { ...AX, tickangle: -30, automargin: true },
+            yaxis: { ...AX, automargin: true },
+            annotations,
+          },
+          { responsive: true, displayModeBar: false },
+        );
+
+        // ── Chart 4: Grouped Bar ──
+        const breakdownMetrics = selectedDimension === "All" ? METRICS : [selectedDimension];
+        const groupedTraces = models.map((m) => {
+          const rows = byModel[m];
+          const vals = breakdownMetrics.map((met) =>
+            avg(rows.map((r) => +r[met]).filter((n) => !isNaN(n))),
+          );
+          return {
+            type: "bar",
+            name: m,
+            x: breakdownMetrics,
+            y: vals,
+            marker: { color: getColor(m), opacity: 0.85 },
+            hovertemplate: "<b>%{x}</b><br>" + m + ": %{y:.3f}<extra></extra>",
+          };
+        });
+
+        Plotly.react(
+          "chart-grouped",
+          groupedTraces,
+          {
+            ...PLOTLY_BASE,
+            barmode: "group",
+            margin: { t: 10, b: 50, l: 50, r: 20 },
+            xaxis: { ...AX },
+            yaxis: {
+              ...AX,
+              range: [0, 1.05],
+              title: { text: "Score", font: { color: "#8b90b0", size: 11 } },
+            },
+          },
+          { responsive: true, displayModeBar: false },
+        );
+      }
+
+      // ── INIT ──
+      window.addEventListener("DOMContentLoaded", () => {
+        fetch(`results.csv?v=${Date.now()}`)
+          .then((res) => {
+            if (!res.ok)
+              throw new Error(
+                `HTTP ${res.status} — make sure results.csv is in the same folder and you're using Live Server.`,
+              );
+            return res.text();
+          })
+          .then((csv) => {
+            const result = Papa.parse(csv, {
+              header: true,
+              skipEmptyLines: true,
+              dynamicTyping: false,
+            });
+            if (result.errors.length) console.warn("CSV parse warnings:", result.errors);
+
+            allData = result.data;
+
+            populateSelect("sel-member", unique(allData, "member_name"));
+            populateSelect("sel-model", unique(allData, "model_name"));
+            populateSelect("sel-dataset", unique(allData, "dataset_name"));
+
+            filterAndRender();
+
+            const overlay = document.getElementById("loading-overlay");
+            overlay.style.opacity = "0";
+            setTimeout(() => (overlay.style.display = "none"), 400);
+          })
+          .catch((err) => {
+            document.getElementById("loading-overlay").style.display = "none";
+            const b = document.getElementById("error-banner");
+            b.style.display = "block";
+            b.innerHTML = `<strong>⚠ Could not load data</strong><br><br>
+          ${err.message}<br><br>
+          Ensure <code>results.csv</code> sits in the <strong>same folder</strong> as <code>dashboard.html</code>
+          and open via <strong>VS Code Live Server</strong> (right-click → Open with Live Server).
+          Direct file:// access blocks <code>fetch()</code>.`;
+          });
+      });
+    </script>
+  </body>
+</html>
